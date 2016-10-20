@@ -74,7 +74,7 @@ function showAbout() {
  * Translate function.
  *
  **/
-function translate(radioFull, radioSelected, radioOgSheet, radioNewSheet, sourceLangage, targetLangage) {
+function translate(radioFull, radioSelected,radioCrazy, radioOgSheet, radioNewSheet, sourceLangage, targetLangage) {
     var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var activeSheet = activeSpreadsheet.getActiveSheet();
     var activeRange = activeSheet.getActiveRange().getA1Notation();
@@ -102,7 +102,10 @@ function translate(radioFull, radioSelected, radioOgSheet, radioNewSheet, source
             translateFullPage(targetSheet, sourceLangage, targetLangage);
         } else if (radioSelected) {
             translateSelectedCells(targetSheet, activeRange, sourceLangage, targetLangage);
-        }
+        } else if (radioCrazy) {
+            translateFullPageCrazy(targetSheet, activeRange, sourceLangage, targetLangage);
+        } 
+      
         activeSpreadsheet.toast("Done.", "", 3);
     } catch (err) {
       activeSpreadsheet.toast("An error occured:" + err);
@@ -126,6 +129,79 @@ function translateFullPage(targetSheet, sourceLangage, targetLangage) {
             }
         }
     }
+}
+
+
+/**
+ *
+ * Code for translate full page content from a source to a target langage. 
+ *
+ **/
+function translateFullPageCrazy(targetSheet, sourceLangage, targetLangage) {
+  var testing=false;
+  if(targetSheet==undefined){
+   var spreadApp = this.SpreadsheetApp;
+    var sheet = spreadApp.create("TestSheet",5,5);
+    spreadApp.flush()
+    sheet.getRange('A1').setValue('en');
+    sheet.getRange('B1').setValue('fr');
+    sheet.getRange('C1').setValue('de');
+    sheet.getRange('D1').setValue('es');
+    sheet.getRange('E1').setValue('nl');
+    sheet.getRange('A2').setValue('hello');
+    sheet.getRange('A3').setValue('processing');
+    sheet.getRange('A4').setValue('finished');
+    spreadApp.flush()
+    targetSheet = sheet.getSheets()[0];
+    testing=true;
+  }
+  
+
+var languagesToUse = [];
+ 
+  var masterLang = "en";    
+    var lrow = targetSheet.getLastRow();
+    var lcol = targetSheet.getLastColumn();
+  for (var i = 1; i <= lrow; i++) {
+    for (var j = 1; j <= lcol; j++) {
+      if (targetSheet.getRange(i, j).getValue() != "") {
+        var activeCellText = targetSheet.getRange(i, j).getValue();
+      }else{
+       var activeCellText = targetSheet.getRange(i, 1).getValue(); 
+      }
+        
+        if(i==1){
+          if(j==1){
+            masterLang=activeCellText;
+          }
+          
+           languagesToUse.push(activeCellText);
+          
+          
+        }
+        else {
+          if(j!=1){
+        var currentLang=  languagesToUse[j-1];
+        var activeCellTranslation = LanguageApp.translate(activeCellText, masterLang,currentLang);
+
+        targetSheet.getRange(i, j).setValue(activeCellTranslation);
+          }
+        }
+      
+        }
+    }
+
+  if(!testing){
+  targetSheet.showSheet();//.getParent().toast("Woohoo");
+  }
+  /*
+  uncomment the else block below to remove the test sheet when debugging. 
+  Should only fire if running test anyway, but leave test example for user to follow.
+  */
+  /*  else{
+   targetSheet.getParent().deleteSheet(targetSheet); 
+  }
+  */
 }
 
 /**
